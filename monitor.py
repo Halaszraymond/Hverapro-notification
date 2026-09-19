@@ -32,6 +32,9 @@ def matches_filters(listing):
     if listing["price"] is not None and listing["price"] > config.MAX_PRICE_HUF:
         return False
 
+    if listing["seller_positive_rating"] < config.MIN_SELLER_POSITIVE_RATING:
+        return False
+
     title_lower = listing["title"].lower()
     return any(keyword.lower() in title_lower for keyword in config.KEYWORDS)
 

@@ -1,6 +1,7 @@
 SEARCH_URL = "https://hardverapro.hu/aprohirdetes/mobil/index.html"   # your saved search
 MAX_PRICE_HUF = 150_000
 KEYWORDS = ["iphone 15 plus", "iphone 15 pro", "iphone 16", "iphone 17"]
+MIN_SELLER_POSITIVE_RATING = 10  # skip sellers with fewer positive ratings (or none at all)
 CHECK_INTERVAL_MINUTES = 15
 
 # Email (SMTP) — works with any provider, not just Gmail
