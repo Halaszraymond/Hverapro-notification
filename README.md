@@ -20,12 +20,12 @@ listings under a price cap, and emails you when a new one shows up.
 ### 1. Get your search URL
  
 - Go to hardverapro.hu
-- Search under the phone/mobiltelefon category for "iPhone 15"
+- Search under the phone/mobiltelefon category for "iPhone 15 Plus"
 - Set the max price filter to 150 000 Ft
 - Copy the resulting URL — this goes in `SEARCH_URL` in `config.py`
-Note: HardverApro's HTML structure isn't something I could verify directly
-while building this, so the CSS selectors in `scraper.py` are a best-effort
-starting point. If the script finds zero listings on a page you know has
+Note: the CSS selectors in `scraper.py` were verified against the live
+markup of the mobil/tablet category page. If HardverApro changes their
+template and the script starts finding zero listings on a page you know has
 results, open the search page in your browser, right-click a listing →
 Inspect, and update the `SELECTORS` dict at the top of `scraper.py` to match
 what you see (the class names on the listing container, title, price, and link).

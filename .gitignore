@@ -1,0 +1,4 @@
+config.py
+seen_listings.json
+log.txt
+__pycache__/
