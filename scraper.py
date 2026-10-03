@@ -10,14 +10,14 @@ USER_AGENT = (
 
 BASE_URL = "https://hardverapro.hu"
 
-# Verified against the live markup of https://hardverapro.hu/aprok/mobil/index.html
-# (Sep 2026). Each listing is an <li class="media" data-uadid="...">; if
-# HardverApro changes their template and this stops finding listings, re-check
-# a listing element in your browser and update these to match.
+# Verified against the live markup of https://hardverapro.hu/aprok/notebook/pc/index.html
+# (Oct 2026). Each listing is an <li class="media" data-uadid="...">. The price
+# in the title column is the full value; the one in .uad-col-price is abbreviated
+# ("3,00M Ft") for large amounts and must not be used.
 SELECTORS = {
     "listing": "li.media[data-uadid]",
     "title": ".uad-col-title h1 a",
-    "price": ".uad-col-price .uad-price span.text-nowrap",
+    "price": ".uad-col-title .uad-price span.text-nowrap",
     "link": ".uad-col-title h1 a",
     "rating": ".uad-user .uad-rating",
 }
@@ -80,3 +80,18 @@ def parse_listings(html):
         })
 
     return listings
+
+
+def parse_detail(html):
+    soup = BeautifulSoup(html, "html.parser")
+    details = {}
+    for th in soup.select("table th"):
+        label = th.get_text(strip=True)
+        td = th.find_next_sibling("td")
+        if td is None:
+            continue
+        if label == "Állapot:":
+            details["condition"] = td.get_text(strip=True).lower()
+        elif label == "Szándék:":
+            details["intent"] = td.get_text(strip=True).lower()
+    return details

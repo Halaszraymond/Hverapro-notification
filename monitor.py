@@ -1,6 +1,9 @@
 import json
+import re
 import sys
 from pathlib import Path
+
+import requests
 
 import config
 import notifier
@@ -15,6 +18,17 @@ for stream in (sys.stdout, sys.stderr):
 
 SEEN_LISTINGS_FILE = Path(__file__).parent / "seen_listings.json"
 
+EXCLUDE_RE = re.compile("|".join(f"(?:{p})" for p in config.EXCLUDE_TITLE_PATTERNS))
+SIZE_RE = re.compile(r"(\d+)(?:\s*[-–]\s*\d+)?\s*(tb|t|gb|g)(?![a-z0-9])")
+NO_UNIT_STORAGE_RE = re.compile(r"(\d+)\s*(?:ssd|nvme|hdd)\b")
+RAM_SUFFIX_RE = re.compile(r"^\s*(ram|ddr\d?|memória|memoria)\b")
+RAM_PREFIX_RE = re.compile(r"(ram|memória|memoria)\s*:?\s*$")
+STORAGE_SUFFIX_RE = re.compile(r"^\s*(ssd|nvme|hdd|m\.?2|tárhely|tarhely)\b")
+STORAGE_PREFIX_RE = re.compile(r"(ssd|nvme|hdd|tárhely|tarhely)\s*:?\s*$")
+GPU_SUFFIX_RE = re.compile(r"^\s*(vga|vram|gddr\d?|videó|gpu|rtx|gtx|radeon|geforce|quadro)\b")
+GPU_PREFIX_RE = re.compile(r"\b(rtx|gtx|rx|radeon|quadro|geforce|mx|gpu|vga)\s*[\w.-]*\s*$")
+MAX_UNLABELED_RAM_GB = 128
+
 
 def load_seen_ids():
     if not SEEN_LISTINGS_FILE.exists():
@@ -28,15 +42,58 @@ def save_seen_ids(seen_ids):
         json.dump(sorted(seen_ids), f, indent=2)
 
 
-def matches_filters(listing):
-    if listing["price"] is not None and listing["price"] > config.MAX_PRICE_HUF:
+def parse_specs(title):
+    text = title.lower()
+    ram_gb = []
+    storage_gb = []
+
+    for match in SIZE_RE.finditer(text):
+        value = int(match.group(1))
+        unit = match.group(2)
+        prefix = text[max(0, match.start() - 15):match.start()]
+        suffix = text[match.end():match.end() + 15]
+
+        if unit in ("tb", "t"):
+            storage_gb.append(value * 1024)
+        elif RAM_SUFFIX_RE.match(suffix):
+            ram_gb.append(value)
+        elif STORAGE_SUFFIX_RE.match(suffix):
+            storage_gb.append(value)
+        elif RAM_PREFIX_RE.search(prefix):
+            ram_gb.append(value)
+        elif STORAGE_PREFIX_RE.search(prefix):
+            storage_gb.append(value)
+        elif GPU_SUFFIX_RE.match(suffix) or GPU_PREFIX_RE.search(prefix):
+            continue
+        elif value <= MAX_UNLABELED_RAM_GB:
+            ram_gb.append(value)
+        else:
+            storage_gb.append(value)
+
+    for match in NO_UNIT_STORAGE_RE.finditer(text):
+        storage_gb.append(int(match.group(1)))
+
+    return (max(ram_gb) if ram_gb else 0, max(storage_gb) if storage_gb else 0)
+
+
+def matches_title(listing):
+    price = listing["price"]
+    if price is None or not (config.MIN_PRICE_HUF <= price <= config.MAX_PRICE_HUF):
         return False
 
     if listing["seller_positive_rating"] < config.MIN_SELLER_POSITIVE_RATING:
         return False
 
-    title_lower = listing["title"].lower()
-    return any(keyword.lower() in title_lower for keyword in config.KEYWORDS)
+    if EXCLUDE_RE.search(listing["title"].lower()):
+        return False
+
+    ram_gb, storage_gb = parse_specs(listing["title"])
+    return ram_gb >= config.MIN_RAM_GB and storage_gb >= config.MIN_STORAGE_GB
+
+
+def is_brand_new_offer(listing):
+    details = scraper.parse_detail(scraper.fetch_page(listing["link"]))
+    return details.get("condition") == "új" and details.get("intent") == "kínál"
 
 
 def main():
@@ -54,16 +111,27 @@ def main():
         if listing["id"] in seen_ids:
             continue
 
-        new_ids.add(listing["id"])
-
         if first_run:
+            new_ids.add(listing["id"])
             continue
 
-        if matches_filters(listing):
+        if not matches_title(listing):
+            new_ids.add(listing["id"])
+            print(f"New listing (filtered out): {listing['title']}")
+            continue
+
+        try:
+            brand_new = is_brand_new_offer(listing)
+        except requests.RequestException as exc:
+            print(f"Could not check condition for {listing['link']}: {exc}")
+            continue
+
+        new_ids.add(listing["id"])
+        if brand_new:
             print(f"New matching listing: {listing['title']} — notifying.")
             notifier.notify_listing(listing)
         else:
-            print(f"New listing (filtered out): {listing['title']}")
+            print(f"New listing (not brand new or not for sale): {listing['title']}")
 
     if new_ids:
         save_seen_ids(seen_ids | new_ids)

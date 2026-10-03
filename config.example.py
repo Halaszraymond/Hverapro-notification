@@ -1,6 +1,30 @@
-SEARCH_URL = "https://hardverapro.hu/aprohirdetes/mobil/index.html"   # your saved search
+SEARCH_URL = "https://hardverapro.hu/aprok/notebook/pc/index.html"   # non-Apple laptops
+MIN_PRICE_HUF = 100_000
 MAX_PRICE_HUF = 150_000
-KEYWORDS = ["iphone 15 plus", "iphone 15 pro", "iphone 16", "iphone 17"]
+MIN_RAM_GB = 16
+MIN_STORAGE_GB = 512
+EXCLUDE_TITLE_PATTERNS = [
+    r"hib[aá]s",
+    r"t[oö]r[oö]tt",
+    r"s[eé]r[uü]lt",
+    r"bontott",
+    r"alkatr[eé]sz",
+    r"dokkol",
+    r"docking station",
+    r"t[oö]lt[oő]",
+    r"tápegys[eé]g",
+    r"billenty[uű]z",
+    r"kijelz[oő]",
+    r"ventil[aá]tor",
+    r"h[oő]cs[oő]",
+    r"\bakku\b",
+    r"akkumul[aá]tor",
+    r"keresem",
+    r"felv[aá]s[aá]rl",
+    r"tablet",
+    r"nem m[uű]k",
+    r"bios (z[aá]r|jelsz)",
+]
 MIN_SELLER_POSITIVE_RATING = 10  # skip sellers with fewer positive ratings (or none at all)
 CHECK_INTERVAL_MINUTES = 15
 
