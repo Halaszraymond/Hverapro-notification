@@ -11,12 +11,14 @@ and emails you when a new one shows up.
    and ID.
 2. It compares the IDs against a local `seen_listings.json` file and only looks
    at listings it hasn't seen before.
-3. Title filters are applied first: price range, seller rating, exclude words,
-   and RAM/storage read from the title. Listings that fail any of them are
-   recorded as seen and skipped.
+3. Title filters are applied first: price range, seller location, seller rating,
+   exclude words, processor (i5 12th gen or newer, or any i7), and RAM/storage
+   read from the title. Listings that fail any of them are recorded as seen and
+   skipped.
 4. For the rest, the listing's detail page is fetched to confirm it is
-   `Állapot: új` (brand new) and `Szándék: kínál` (for sale, not wanted).
-   Only then is an email sent.
+   `Állapot: új` (or `használt` with "újszerű" in the title, since sellers file
+   like-new listings as used) and `Szándék: kínál` (for sale, not wanted). Only
+   then is an email sent, with the condition and location in it.
 5. A scheduler (cron, or Windows Task Scheduler) runs the script every
    10–15 minutes.
 
@@ -34,6 +36,14 @@ search and filter settings are already set for laptops:
 - `MIN_PRICE_HUF` / `MAX_PRICE_HUF` — 100 000 / 150 000
 - `MIN_RAM_GB` / `MIN_STORAGE_GB` — 16 / 512. Listings that don't state RAM and
   storage in the title are skipped, since they can't be verified.
+- `MIN_I5_GENERATION` / CPU — i5 must be 12th gen or newer; i7 any generation.
+  Other CPUs (Ryzen, i9, Core Ultra) and listings with no CPU in the title are
+  skipped.
+- `PICKUP_TOWNS` — Budapest, its districts, and Pest county towns. Listings
+  outside this list are skipped. The list is hand-written, so towns missing from
+  it will be skipped until you add them.
+- `ALLOWED_CONDITIONS` — `új`. `LIKE_NEW_TITLE_PATTERN` also accepts listings
+  filed as `használt` whose title says "újszerű".
 - `EXCLUDE_TITLE_PATTERNS` — regexes matched against the lowercase title
   (broken, part-only, chargers, docks, screens, tablets, wanted ads, etc.)
 - `MIN_SELLER_POSITIVE_RATING` — skip sellers with fewer positive ratings

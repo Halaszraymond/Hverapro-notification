@@ -26,6 +26,8 @@ def notify_listing(listing):
     body = (
         f"{listing['title']}\n"
         f"Price: {price_text}\n"
+        f"Condition: {listing['condition']}\n"
+        f"Location: {listing['city']}\n"
         f"Link: {listing['link']}\n"
     )
     send_email(subject, body)

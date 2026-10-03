@@ -3,6 +3,23 @@ MIN_PRICE_HUF = 100_000
 MAX_PRICE_HUF = 150_000
 MIN_RAM_GB = 16
 MIN_STORAGE_GB = 512
+MIN_I5_GENERATION = 12  # i7 is accepted at any generation
+ALLOWED_CONDITIONS = ("új",)
+LIKE_NEW_TITLE_PATTERN = r"[uú]jszer[uű]"  # sellers mark like-new listings as "használt" in the condition field
+PICKUP_TOWNS = [
+    "Budapest",
+    "Érd", "Budaörs", "Budakeszi", "Budajenő", "Biatorbágy", "Törökbálint",
+    "Diósd", "Sóskút", "Tárnok", "Páty", "Zsámbék", "Tök", "Perbál",
+    "Nagykovácsi", "Telki", "Solymár", "Pilisvörösvár", "Piliscsaba", "Üröm",
+    "Pomáz", "Csobánka", "Pilisborosjenő", "Szentendre", "Tahitótfalu", "Leányfalu",
+    "Dunakeszi", "Göd", "Fót", "Mogyoród", "Csömör", "Kerepes", "Kistarcsa",
+    "Veresegyház", "Szada", "Gödöllő", "Őrbottyán", "Vácrátót", "Vác", "Sződliget",
+    "Pécel", "Isaszeg", "Gyömrő", "Maglód", "Üllő", "Ecser", "Monor", "Péceli",
+    "Vecsés", "Gyál", "Dunaharaszti", "Halásztelek", "Szigetszentmiklós",
+    "Szigethalom", "Taksony", "Alsónémedi", "Dunavarsány", "Ráckeve", "Soroksár",
+    "Dabas", "Ócsa", "Inárcs", "Ballószög", "Kiskunlacháza", "Cegléd", "Nagykőrös",
+    "Abony", "Tóalmás", "Csomád", "Tápiószele",
+]
 EXCLUDE_TITLE_PATTERNS = [
     r"hib[aá]s",
     r"t[oö]r[oö]tt",

@@ -20,6 +20,7 @@ SELECTORS = {
     "price": ".uad-col-title .uad-price span.text-nowrap",
     "link": ".uad-col-title h1 a",
     "rating": ".uad-user .uad-rating",
+    "city": ".uad-cities",
 }
 
 
@@ -59,6 +60,7 @@ def parse_listings(html):
         price_el = element.select_one(SELECTORS["price"])
         link_el = element.select_one(SELECTORS["link"])
         rating_el = element.select_one(SELECTORS["rating"])
+        city_el = element.select_one(SELECTORS["city"])
 
         if not listing_id or not title_el or not link_el:
             continue
@@ -77,6 +79,7 @@ def parse_listings(html):
             "price": price,
             "link": link,
             "seller_positive_rating": seller_positive_rating,
+            "city": city_el.get_text(strip=True) if city_el else "",
         })
 
     return listings
