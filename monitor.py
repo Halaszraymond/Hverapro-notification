@@ -19,11 +19,12 @@ for stream in (sys.stdout, sys.stderr):
 SEEN_LISTINGS_FILE = Path(__file__).parent / "seen_listings.json"
 
 EXCLUDE_RE = re.compile("|".join(f"(?:{p})" for p in config.EXCLUDE_TITLE_PATTERNS))
+DESCRIPTION_EXCLUDE_RE = re.compile("|".join(f"(?:{p})" for p in config.DESCRIPTION_EXCLUDE_PATTERNS))
 SIZE_RE = re.compile(r"(\d+)(?:\s*[-–]\s*\d+)?\s*(tb|t|gb|g)(?![a-z0-9])")
 NO_UNIT_STORAGE_RE = re.compile(r"(\d+)\s*(?:ssd|nvme|hdd)\b")
-RAM_SUFFIX_RE = re.compile(r"^\s*(ram|ddr\d?|memória|memoria)\b")
+RAM_SUFFIX_RE = re.compile(r"^\s*(ram|ddr\d?|memória|memoria)\b(?!\s*:)")
 RAM_PREFIX_RE = re.compile(r"(ram|memória|memoria)\s*:?\s*$")
-STORAGE_SUFFIX_RE = re.compile(r"^\s*(ssd|nvme|hdd|m\.?2|tárhely|tarhely)\b")
+STORAGE_SUFFIX_RE = re.compile(r"^\s*(ssd|nvme|hdd|m\.?2|tárhely|tarhely)\b(?!\s*:)")
 STORAGE_PREFIX_RE = re.compile(r"(ssd|nvme|hdd|tárhely|tarhely)\s*:?\s*$")
 GPU_SUFFIX_RE = re.compile(r"^\s*(vga|vram|gddr\d?|videó|gpu|rtx|gtx|radeon|geforce|quadro)\b")
 GPU_PREFIX_RE = re.compile(r"\b(rtx|gtx|rx|radeon|quadro|geforce|mx|gpu|vga)\s*[\w.-]*\s*$")
@@ -98,7 +99,7 @@ def in_pickup_area(city):
     return False
 
 
-def matches_title(listing):
+def matches_listing_basics(listing):
     price = listing["price"]
     if price is None or not (config.MIN_PRICE_HUF <= price <= config.MAX_PRICE_HUF):
         return False
@@ -109,21 +110,28 @@ def matches_title(listing):
     if not in_pickup_area(listing["city"]):
         return False
 
-    if EXCLUDE_RE.search(listing["title"].lower()):
+    return not EXCLUDE_RE.search(listing["title"].lower())
+
+
+def matches_ad_text(title, description):
+    if DESCRIPTION_EXCLUDE_RE.search(description.lower()):
         return False
 
-    if not is_cpu_ok(listing["title"]):
+    if not (is_cpu_ok(title) or is_cpu_ok(description)):
         return False
 
-    ram_gb, storage_gb = parse_specs(listing["title"])
-    return ram_gb >= config.MIN_RAM_GB and storage_gb >= config.MIN_STORAGE_GB
+    title_ram, title_storage = parse_specs(title)
+    desc_ram, desc_storage = parse_specs(description)
+    ram_ok = max(title_ram, desc_ram) >= config.MIN_RAM_GB
+    storage_ok = max(title_storage, desc_storage) >= config.MIN_STORAGE_GB
+    return ram_ok and storage_ok
 
 
-def get_offer_condition(listing):
+def get_offer_details(listing):
     details = scraper.parse_detail(scraper.fetch_page(listing["link"]))
     if details.get("intent") != "kínál":
-        return None
-    return details.get("condition")
+        return None, ""
+    return details.get("condition"), details.get("description", "")
 
 
 def main():
@@ -145,27 +153,24 @@ def main():
             new_ids.add(listing["id"])
             continue
 
-        if not matches_title(listing):
+        if not matches_listing_basics(listing):
             new_ids.add(listing["id"])
             print(f"New listing (filtered out): {listing['title']}")
             continue
 
         try:
-            condition = get_offer_condition(listing)
+            condition, description = get_offer_details(listing)
         except requests.RequestException as exc:
-            print(f"Could not check condition for {listing['link']}: {exc}")
+            print(f"Could not check ad page {listing['link']}: {exc}")
             continue
 
         new_ids.add(listing["id"])
-        if condition in config.ALLOWED_CONDITIONS:
-            listing["condition"] = condition
-        elif condition == "használt" and re.search(config.LIKE_NEW_TITLE_PATTERN, listing["title"].lower()):
-            listing["condition"] = "újszerű (listed as used)"
-        else:
-            print(f"New listing (condition {condition!r} or not for sale): {listing['title']}")
+        if condition not in config.ALLOWED_CONDITIONS or not matches_ad_text(listing["title"], description):
+            print(f"New listing (condition {condition!r}, or ad text filtered out): {listing['title']}")
             continue
 
-        print(f"New matching listing ({listing['condition']}): {listing['title']} — notifying.")
+        listing["condition"] = condition
+        print(f"New matching listing ({condition}): {listing['title']} — notifying.")
         notifier.notify_listing(listing)
 
     if new_ids:

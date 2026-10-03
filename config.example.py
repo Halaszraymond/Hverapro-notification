@@ -4,8 +4,7 @@ MAX_PRICE_HUF = 150_000
 MIN_RAM_GB = 16
 MIN_STORAGE_GB = 512
 MIN_I5_GENERATION = 12  # i7 is accepted at any generation
-ALLOWED_CONDITIONS = ("új",)
-LIKE_NEW_TITLE_PATTERN = r"[uú]jszer[uű]"  # sellers mark like-new listings as "használt" in the condition field
+ALLOWED_CONDITIONS = ("új", "használt")
 PICKUP_TOWNS = [
     "Budapest",
     "Érd", "Budaörs", "Budakeszi", "Budajenő", "Biatorbágy", "Törökbálint",
@@ -41,6 +40,14 @@ EXCLUDE_TITLE_PATTERNS = [
     r"tablet",
     r"nem m[uű]k",
     r"bios (z[aá]r|jelsz)",
+]
+# Narrower than the title list: descriptions often mention chargers or keyboards on working laptops
+DESCRIPTION_EXCLUDE_PATTERNS = [
+    r"csak alkatr",
+    r"nem m[uű]k",
+    r"bios (z[aá]r|jelsz)",
+    r"t[oö]r[oö]tt",
+    r"hib[aá]s (g[eé]p|laptop|m[uű]k)",
 ]
 MIN_SELLER_POSITIVE_RATING = 10  # skip sellers with fewer positive ratings (or none at all)
 CHECK_INTERVAL_MINUTES = 15

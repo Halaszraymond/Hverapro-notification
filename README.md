@@ -16,9 +16,8 @@ and emails you when a new one shows up.
    read from the title. Listings that fail any of them are recorded as seen and
    skipped.
 4. For the rest, the listing's detail page is fetched to confirm it is
-   `Állapot: új` (or `használt` with "újszerű" in the title, since sellers file
-   like-new listings as used) and `Szándék: kínál` (for sale, not wanted). Only
-   then is an email sent, with the condition and location in it.
+   `Állapot: új` or `használt` (used) and `Szándék: kínál` (for sale, not
+   wanted). Only then is an email sent, with the condition and location in it.
 5. A scheduler (cron, or Windows Task Scheduler) runs the script every
    10–15 minutes.
 
@@ -42,8 +41,8 @@ search and filter settings are already set for laptops:
 - `PICKUP_TOWNS` — Budapest, its districts, and Pest county towns. Listings
   outside this list are skipped. The list is hand-written, so towns missing from
   it will be skipped until you add them.
-- `ALLOWED_CONDITIONS` — `új`. `LIKE_NEW_TITLE_PATTERN` also accepts listings
-  filed as `használt` whose title says "újszerű".
+- `ALLOWED_CONDITIONS` — `új` and `használt`. Used listings are included, so check
+  the photos and seller details before buying.
 - `EXCLUDE_TITLE_PATTERNS` — regexes matched against the lowercase title
   (broken, part-only, chargers, docks, screens, tablets, wanted ads, etc.)
 - `MIN_SELLER_POSITIVE_RATING` — skip sellers with fewer positive ratings

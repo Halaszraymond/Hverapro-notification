@@ -97,4 +97,6 @@ def parse_detail(html):
             details["condition"] = td.get_text(strip=True).lower()
         elif label == "Szándék:":
             details["intent"] = td.get_text(strip=True).lower()
+    description_el = soup.select_one(".rtif-content.uad-content")
+    details["description"] = description_el.get_text(" ", strip=True) if description_el else ""
     return details
